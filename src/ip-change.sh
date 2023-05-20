@@ -3,9 +3,7 @@
 New_Cidr=$new_source_ip
 Security_Group_ID=$securityGroup_id
 
-#######################################################################################
 ####################Ingress Rule Function##############################################
-#######################################################################################
 ingress_func() {
   if [[ "$Security_Group_ID" == "" ]]
   then
@@ -29,9 +27,7 @@ ingress_func() {
   fi 
 }
 
-#######################################################################################
 ####################Egress Rule Function###############################################
-#######################################################################################
 egress_func() {
   if [[ "$Security_Group_ID" == "" ]]
   then
@@ -55,12 +51,9 @@ egress_func() {
   fi 
 }
 
-#######################################################################################
 ####################Ingress Main Execution#############################################
-#######################################################################################
-ingress_security_group_rules=$(aws ec2 describe-security-groups --group-ids $Security_Group_ID --query "SecurityGroups[].[IpPermissions[*]][0][0]" --output json)
+ingress_security_group_rules=$(aws ec2 describe-security-groups --group-ids $Security_Group_ID --query "SecurityGroups[].[IpPermissions[*]][0][0]")
 ingress_number_of_rules=$(echo "$ingress_security_group_rules" | jq '. | length')
-echo "Total Number of Ingress Rules = $(($ingress_number_of_rules+1))"
 
 for (( j=0 ; j<$ingress_number_of_rules ; j++));
 do
@@ -69,35 +62,31 @@ do
   if [[ $PROTOCOL == "-1" ]]
   then
     IP=$(echo "$rules" | jq -r '.IpRanges[].CidrIp')
-    echo "Working on Ingress Rule Number $(($j+1)) of security group $Security_Group_ID"
   else
     FROMPORT=$(echo "$rules" | jq -r '.FromPort')
     TOPORT=$(echo "$rules" | jq -r '.ToPort')
     PROTOCOL=$(echo "$rules" | jq -r '.IpProtocol')
     IP=$(echo "$rules" | jq -r '.IpRanges[].CidrIp')
-    echo "Working on Ingress Rule Number $(($j+1)) of security group $Security_Group_ID"
   fi
 
   if [[ $IP == "0.0.0.0/0" ]]
   then
-    DESCRIPTION="Modified by Terraform"
-    ACTION="ingress"
+    DESCRIPTION="Modified by Terraform-shell script"
+    RULE="ingress"
 
-    case "$ACTION" in
+    case "$RULE" in
     ingress)
       ingress_func ;;
     *) echo "Invalid action."
     exit 1 ;;
     esac
   else
-    echo "Source IP is not 0.0.0.0/0, no actions to perform"
+    echo "skip: Source IP is not 0.0.0.0/0"
   fi
 done
 
-#######################################################################################
 ####################Egress Main Execution##############################################
-#######################################################################################
-egress_security_group_rules=$(aws ec2 describe-security-groups --group-ids $Security_Group_ID --query "SecurityGroups[].[IpPermissionsEgress[*]][0][0]" --output json)
+egress_security_group_rules=$(aws ec2 describe-security-groups --group-ids $Security_Group_ID --query "SecurityGroups[].[IpPermissionsEgress[*]][0][0]")
 egress_number_of_rules=$(echo "$egress_security_group_rules" | jq '. | length')
 echo "Total Number of Egress Rules = $(($egress_number_of_rules+1))"
 
@@ -108,28 +97,26 @@ do
   if [[ $PROTOCOL == "-1" ]]
   then
     IP=$(echo "$rules" | jq -r '.IpRanges[].CidrIp')
-    echo "Working on Egress Rule Number $(($i+1)) of security group $Security_Group_ID"
   else
     FROMPORT=$(echo "$rules" | jq -r '.FromPort')
     TOPORT=$(echo "$rules" | jq -r '.ToPort')
     PROTOCOL=$(echo "$rules" | jq -r '.IpProtocol')
     IP=$(echo "$rules" | jq -r '.IpRanges[].CidrIp')
-    echo "Working on Egress Rule Number $(($i+1)) of security group $Security_Group_ID"
   fi
 
   if [[ $IP == "0.0.0.0/0" ]]
   then
-    DESCRIPTION="Modified by Terraform"
-    ACTION="egress"
+    DESCRIPTION="Modified by Terraform-shell script"
+    RULE="egress"
 
-    case "$ACTION" in
+    case "$RULE" in
     egress)
       egress_func ;;
     *) echo "Invalid action." 
     exit 1 ;;
     esac
   else
-    echo "Source IP is not 0.0.0.0/0, no actions to perform"
+    echo "skip: Source IP is not 0.0.0.0/0"
   fi
 
 done

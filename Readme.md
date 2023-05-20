@@ -1,6 +1,6 @@
-# On creation of AWS Managed Active Directory, aws provides one defualt security group.
-# The security group ports are wide open to anywhere
-# We can change that ip from the restrictive IP which we want
+On creation of AWS Managed Active Directory, aws provides one defualt security group.
+The security group ports are wide open to anywhere
+We can change that ip from the restrictive IP which we want
 
 # Pre-requisite
 
